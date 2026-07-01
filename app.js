@@ -86,6 +86,7 @@ async function init() {
   showLoading();
   try {
     AppState.deckData = await loadKdltDeck();
+    sortDeckChapters(AppState.deckData);
     normalizeDeckUrls(AppState.deckData);
     Router.handleRoute();
   } catch (error) {
@@ -108,6 +109,15 @@ async function loadKdltDeck() {
     }
   }
   throw lastError || new Error('KDLT.json introuvable');
+}
+
+function sortDeckChapters(deck) {
+  deck.sort((a, b) => getChapterNumber(a.chapter) - getChapterNumber(b.chapter));
+}
+
+function getChapterNumber(title) {
+  const match = String(title || '').match(/chapitre\s+(\d+)/i);
+  return match ? Number.parseInt(match[1], 10) : Number.MAX_SAFE_INTEGER;
 }
 
 function normalizeDeckUrls(deck) {
@@ -509,8 +519,8 @@ function validateDrawnStroke(active) {
   const directionOk = validateStrokeDirection(active.points, targetStroke.d);
   const shapeOk = validateStrokeShape(drawn, target);
   return directionOk && shapeOk && (
-    pixelScore.coverage > 0.36 ||
-    (centerDistance < 20 && sizeRatio > 0.35 && overlap > 0.12 && pixelScore.hitRatio > 0.32)
+    pixelScore.coverage > 0.3 ||
+    (centerDistance < 30 && sizeRatio > 0.28 && overlap > 0.06 && pixelScore.hitRatio > 0.22)
   );
 }
 
@@ -521,7 +531,7 @@ function validateStrokeShape(drawn, target) {
   const drawnAxis = Math.abs(drawn.width - drawn.height) / Math.max(drawn.width, drawn.height);
   const targetAxis = Math.abs(target.width - target.height) / Math.max(target.width, target.height);
   const axisDifference = Math.abs(drawnAxis - targetAxis);
-  return aspectSimilarity > 0.32 || axisDifference < 0.28;
+  return aspectSimilarity > 0.28 || axisDifference < 0.34;
 }
 
 function getStrokeMatchScore(points, d) {
