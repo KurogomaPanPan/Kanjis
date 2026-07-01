@@ -837,7 +837,6 @@ function setupEventHandlers() {
       document.getElementById('cardDetailScreen').style.display = 'none';
     }
   });
-  document.getElementById('viewChapterBtn').addEventListener('click', () => {});
   document.getElementById('startQuizBtn').addEventListener('click', startQuiz);
   document.getElementById('showAnswerBtn').addEventListener('click', revealQuizAnswer);
   document.getElementById('nextQuestionBtn').addEventListener('click', goToNextQuestion);

@@ -134,6 +134,14 @@ input {
   margin-bottom: var(--spacing-xl);
 }
 
+.chapter-actions {
+  justify-content: center;
+}
+
+.chapter-actions .action-btn {
+  max-width: 240px;
+}
+
 .action-btn {
   flex: 1;
   min-height: 48px;
@@ -324,7 +332,7 @@ input {
 
 .flashcard-front {
   display: -webkit-box;
-  max-height: 53px;
+  max-height: 51px;
   padding-bottom: 7px;
   overflow: hidden;
   color: var(--text-primary);
