@@ -324,13 +324,12 @@ input {
 
 .flashcard-front {
   display: -webkit-box;
-  min-height: calc(13px * 1.25 * 3 + 8px);
-  max-height: calc(13px * 1.25 * 3 + 8px);
+  max-height: 56px;
   padding-bottom: 7px;
   overflow: hidden;
   color: var(--text-primary);
   font-size: 13px;
-  line-height: 1.25;
+  line-height: 16px;
   border-bottom: 1px solid var(--border);
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
@@ -341,7 +340,6 @@ input {
   flex: 1;
   align-items: center;
   justify-content: center;
-  min-height: 62px;
   padding-top: 7px;
   font-size: 44px;
   line-height: 1;

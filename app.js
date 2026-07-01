@@ -832,6 +832,11 @@ function setupEventHandlers() {
   document.getElementById('closeCardDetail').addEventListener('click', () => {
     document.getElementById('cardDetailScreen').style.display = 'none';
   });
+  document.getElementById('cardDetailScreen').addEventListener('click', (event) => {
+    if (event.target === event.currentTarget) {
+      document.getElementById('cardDetailScreen').style.display = 'none';
+    }
+  });
   document.getElementById('viewChapterBtn').addEventListener('click', () => {});
   document.getElementById('startQuizBtn').addEventListener('click', startQuiz);
   document.getElementById('showAnswerBtn').addEventListener('click', revealQuizAnswer);
