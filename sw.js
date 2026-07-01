@@ -1,5 +1,5 @@
 // Service Worker for offline caching.
-const CACHE_NAME = 'kanji-writing-root-v3';
+const CACHE_NAME = 'kanji-writing-root-v4';
 const urlsToCache = [
   './',
   './index.html',

@@ -154,7 +154,7 @@ function renderHome() {
   const totalCards = AppState.deckData.reduce((sum, chapter) => sum + chapter.cards.length, 0);
   const home = document.getElementById('homeScreen');
   home.innerHTML = `
-    <div class="deck-info">
+    <div class="deck-info home-info">
       <h2>漢字</h2>
       <p class="deck-stats">${AppState.deckData.length} chapitres - ${totalCards} cartes</p>
     </div>
@@ -275,9 +275,11 @@ function showCardsView(chapterIndex) {
     chapterControls.style.display = 'block';
     document.getElementById('chapterTitle').textContent = chapter.chapter;
     document.getElementById('chapterStats').textContent = `${chapter.cards.length} cartes`;
+    document.querySelector('.cards-controls').style.display = 'none';
     document.getElementById('quizChapterBtn').onclick = () => Router.navigate(`/quiz/config/chapter/${chapterIndex}`);
   } else {
     chapterControls.style.display = 'none';
+    document.querySelector('.cards-controls').style.display = 'flex';
   }
 
   if (!isSame) {

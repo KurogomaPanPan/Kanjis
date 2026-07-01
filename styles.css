@@ -114,6 +114,12 @@ input {
   line-height: 1.1;
 }
 
+.home-info h2 {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
 .deck-stats,
 .chapter-stats,
 .cards-progress {
@@ -318,7 +324,9 @@ input {
 
 .flashcard-front {
   display: -webkit-box;
-  padding-bottom: 8px;
+  min-height: calc(13px * 1.25 * 3 + 8px);
+  max-height: calc(13px * 1.25 * 3 + 8px);
+  padding-bottom: 7px;
   overflow: hidden;
   color: var(--text-primary);
   font-size: 13px;
@@ -333,7 +341,8 @@ input {
   flex: 1;
   align-items: center;
   justify-content: center;
-  padding-top: 8px;
+  min-height: 62px;
+  padding-top: 7px;
   font-size: 44px;
   line-height: 1;
   text-align: center;
