@@ -385,9 +385,11 @@ input {
 .card-detail {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-lg);
+  gap: var(--spacing-md);
+  max-height: min(78vh, 680px);
   min-height: 300px;
   padding: var(--spacing-xl);
+  overflow-y: auto;
   background: var(--bg-primary);
   border-radius: var(--radius);
   box-shadow: var(--shadow-md);
@@ -404,6 +406,96 @@ input {
   font-size: clamp(52px, 22vw, 96px);
   line-height: 1.05;
   text-align: center;
+}
+
+.learning-info {
+  width: 100%;
+  color: var(--text-primary);
+  text-align: left;
+}
+
+.learning-section {
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--border);
+}
+
+.learning-section + .learning-section {
+  margin-top: var(--spacing-md);
+}
+
+.learning-section h3 {
+  margin-bottom: var(--spacing-sm);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.learning-meanings,
+.learning-status {
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.reading-grid {
+  display: grid;
+  gap: var(--spacing-sm);
+}
+
+.reading-grid div {
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  gap: var(--spacing-sm);
+  align-items: baseline;
+  font-size: 14px;
+}
+
+.reading-grid span {
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.reading-grid strong {
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.vocab-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.vocab-item {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px var(--spacing-sm);
+  padding: var(--spacing-sm);
+  background: var(--bg-secondary);
+  border-radius: var(--radius);
+}
+
+.vocab-word {
+  font-size: 18px;
+  font-weight: 650;
+  line-height: 1.2;
+}
+
+.vocab-reading {
+  align-self: center;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.vocab-meaning {
+  grid-column: 1 / -1;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.3;
 }
 
 .quiz-config {
@@ -544,6 +636,19 @@ input {
   font-size: 54px;
   line-height: 1;
   text-align: center;
+}
+
+.quiz-learning-info {
+  max-height: 240px;
+  overflow-y: auto;
+  padding: var(--spacing-md);
+  background: var(--bg-secondary);
+  border-radius: var(--radius);
+}
+
+.quiz-learning-info .learning-section:first-child {
+  padding-top: 0;
+  border-top: none;
 }
 
 .quiz-controls {

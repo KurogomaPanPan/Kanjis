@@ -1,5 +1,5 @@
 // Service Worker for offline caching.
-const CACHE_NAME = 'kanji-writing-root-v10';
+const CACHE_NAME = 'kanji-writing-root-v12';
 const urlsToCache = [
   './',
   './index.html',
@@ -33,7 +33,10 @@ self.addEventListener('message', event => {
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
 
-  if (event.request.url.includes('cdn.jsdelivr.net/gh/KanjiVG/kanjivg')) {
+  if (
+    event.request.url.includes('cdn.jsdelivr.net/gh/KanjiVG/kanjivg') ||
+    event.request.url.includes('kanjiapi.dev/v1/')
+  ) {
     event.respondWith(
       caches.open(CACHE_NAME).then(cache =>
         cache.match(event.request).then(cached =>

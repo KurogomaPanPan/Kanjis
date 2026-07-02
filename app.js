@@ -1,6 +1,9 @@
 // Stroke paths are loaded from KanjiVG: https://kanjivg.tagaini.net
 const KANJIVG_BASE_URL = 'https://cdn.jsdelivr.net/gh/KanjiVG/kanjivg@master/kanji';
+const KANJI_API_BASE_URL = 'https://kanjiapi.dev/v1';
 const KANJI_VIEWBOX = 109;
+const KANJI_INFO_CACHE_PREFIX = 'kanjiInfo:';
+const VOCABULARY_LIMIT = 6;
 
 const AppState = {
   deckData: [],
@@ -362,7 +365,149 @@ function showCardDetail(chapterIndex, cardIndex) {
   const detail = document.getElementById('detailCard');
   detail.querySelector('.card-detail-front').textContent = card.front;
   detail.querySelector('.card-detail-back').textContent = card.back;
+  renderLearningInfo(document.getElementById('detailLearningInfo'), card, { loading: true });
+  hydrateLearningInfo(document.getElementById('detailLearningInfo'), card);
   document.getElementById('cardDetailScreen').style.display = 'flex';
+}
+
+async function hydrateLearningInfo(container, card) {
+  const kanji = getSingleKanji(card.back);
+  if (!container || !kanji) {
+    renderLearningInfo(container, card, { unavailable: true });
+    return;
+  }
+  try {
+    const info = await loadKanjiInfo(kanji);
+    renderLearningInfo(container, card, { info });
+  } catch (error) {
+    console.error('Kanji info load error:', error);
+    renderLearningInfo(container, card, { error: true });
+  }
+}
+
+async function loadKanjiInfo(kanji) {
+  const cacheKey = `${KANJI_INFO_CACHE_PREFIX}${kanji}`;
+  try {
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) return JSON.parse(cached);
+  } catch {}
+
+  const [kanjiData, wordsData] = await Promise.all([
+    fetchJson(`${KANJI_API_BASE_URL}/kanji/${encodeURIComponent(kanji)}`),
+    fetchJson(`${KANJI_API_BASE_URL}/words/${encodeURIComponent(kanji)}`).catch(() => []),
+  ]);
+  const info = normalizeKanjiInfo(kanji, kanjiData, wordsData);
+  try {
+    localStorage.setItem(cacheKey, JSON.stringify(info));
+  } catch {}
+  return info;
+}
+
+async function fetchJson(url) {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+  return response.json();
+}
+
+function normalizeKanjiInfo(kanji, kanjiData, wordsData) {
+  return {
+    kanji,
+    readings: {
+      on: Array.isArray(kanjiData.on_readings) ? kanjiData.on_readings.slice(0, 8) : [],
+      kun: Array.isArray(kanjiData.kun_readings) ? kanjiData.kun_readings.slice(0, 8) : [],
+    },
+    meanings: Array.isArray(kanjiData.meanings) ? kanjiData.meanings.slice(0, 4) : [],
+    vocabulary: pickVocabularyExamples(kanji, Array.isArray(wordsData) ? wordsData : []),
+  };
+}
+
+function pickVocabularyExamples(kanji, words) {
+  const examples = [];
+  const seen = new Set();
+  words.forEach((entry) => {
+    const gloss = getEntryGloss(entry);
+    (entry.variants || []).forEach((variant) => {
+      const written = String(variant.written || '');
+      const reading = String(variant.pronounced || '');
+      if (!written.includes(kanji) || !reading || !gloss) return;
+      if ([...written].length < 2) return;
+      if (/[0-9０-９〇]/.test(written)) return;
+      if (!/\p{Script=Han}/u.test(written)) return;
+      const key = `${written}|${reading}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      const priorities = Array.isArray(variant.priorities) ? variant.priorities : [];
+      examples.push({
+        word: written,
+        reading,
+        meaning: gloss,
+        score: getVocabularyScore(written, priorities),
+      });
+    });
+  });
+  return examples
+    .sort((a, b) => b.score - a.score || a.word.length - b.word.length)
+    .slice(0, VOCABULARY_LIMIT)
+    .map(({ word, reading, meaning }) => ({ word, reading, meaning }));
+}
+
+function getEntryGloss(entry) {
+  const firstMeaning = (entry.meanings || []).find((meaning) => Array.isArray(meaning.glosses) && meaning.glosses.length);
+  if (!firstMeaning) return '';
+  return firstMeaning.glosses.slice(0, 2).join(' / ');
+}
+
+function getVocabularyScore(written, priorities) {
+  let score = Math.max(0, 10 - written.length);
+  priorities.forEach((priority) => {
+    if (/^ichi/.test(priority)) score += 20;
+    else if (/^news/.test(priority)) score += 12;
+    else if (/^spec/.test(priority)) score += 8;
+    else if (/^nf\d+/.test(priority)) score += Math.max(1, 8 - Number(priority.slice(2)) / 8);
+  });
+  return score;
+}
+
+function renderLearningInfo(container, card, state = {}) {
+  if (!container) return;
+  if (state.loading) {
+    container.innerHTML = '<div class="learning-status">Chargement des lectures...</div>';
+    return;
+  }
+  if (state.error) {
+    container.innerHTML = '<div class="learning-status">Lectures indisponibles.</div>';
+    return;
+  }
+  if (state.unavailable || !state.info) {
+    container.innerHTML = '';
+    return;
+  }
+
+  const { readings, meanings, vocabulary } = state.info;
+  const readingRows = [
+    readings.on.length ? `<div><span>On</span><strong>${escapeHtml(readings.on.join('、'))}</strong></div>` : '',
+    readings.kun.length ? `<div><span>Kun</span><strong>${escapeHtml(readings.kun.join('、'))}</strong></div>` : '',
+  ].filter(Boolean).join('');
+  const meaningText = meanings.length ? `<p class="learning-meanings">${escapeHtml(meanings.join(' / '))}</p>` : '';
+  const vocabRows = vocabulary.length
+    ? vocabulary.map((item) => `
+      <div class="vocab-item">
+        <div class="vocab-word">${escapeHtml(item.word)}</div>
+        <div class="vocab-reading">${escapeHtml(item.reading)}</div>
+        <div class="vocab-meaning">${escapeHtml(item.meaning)}</div>
+      </div>`).join('')
+    : '<div class="learning-status">Aucun vocabulaire trouvé.</div>';
+
+  container.innerHTML = `
+    <div class="learning-section">
+      <h3>Lectures</h3>
+      ${meaningText}
+      <div class="reading-grid">${readingRows || '<div class="learning-status">Aucune lecture trouvée.</div>'}</div>
+    </div>
+    <div class="learning-section">
+      <h3>Vocabulaire</h3>
+      <div class="vocab-list">${vocabRows}</div>
+    </div>`;
 }
 
 function showQuizConfig() {
@@ -421,6 +566,8 @@ async function renderQuizQuestion() {
   document.getElementById('quizPrompt').textContent = question.front;
   document.getElementById('quizAnswer').textContent = question.back;
   document.getElementById('quizAnswer').style.display = 'none';
+  document.getElementById('quizLearningInfo').style.display = 'none';
+  document.getElementById('quizLearningInfo').innerHTML = '';
   document.getElementById('quizFeedback').textContent = '';
   document.getElementById('showAnswerBtn').style.display = 'block';
   document.getElementById('nextQuestionBtn').style.display = 'none';
@@ -458,6 +605,7 @@ function createQuizDrawingState(card, kanji) {
     status: 'loading',
     revealed: false,
     completed: false,
+    learningShown: false,
   };
 }
 
@@ -531,6 +679,7 @@ function finishStroke(event, canvas, active) {
       updateQuizStrokeProgress(active);
       document.getElementById('showAnswerBtn').style.display = 'none';
       document.getElementById('nextQuestionBtn').style.display = 'block';
+      showQuizLearningInfo(active);
       redrawQuizCanvas();
       return;
     }
@@ -565,8 +714,8 @@ function validateDrawnStroke(active) {
   const directionOk = validateStrokeDirection(active.points, targetStroke.d);
   const shapeOk = validateStrokeShape(drawn, target);
   return directionOk && shapeOk && (
-    pixelScore.coverage > 0.3 ||
-    (centerDistance < 30 && sizeRatio > 0.28 && overlap > 0.06 && pixelScore.hitRatio > 0.22)
+    pixelScore.coverage > 0.26 ||
+    (centerDistance < 38 && sizeRatio > 0.24 && overlap > 0.035 && pixelScore.hitRatio > 0.18)
   );
 }
 
@@ -778,7 +927,17 @@ function revealQuizAnswer() {
   document.getElementById('quizAnswer').style.display = 'block';
   document.getElementById('showAnswerBtn').style.display = 'none';
   document.getElementById('nextQuestionBtn').style.display = 'block';
+  showQuizLearningInfo(active);
   redrawQuizCanvas();
+}
+
+function showQuizLearningInfo(active) {
+  if (!active || active.learningShown) return;
+  active.learningShown = true;
+  const container = document.getElementById('quizLearningInfo');
+  container.style.display = 'block';
+  renderLearningInfo(container, active.card, { loading: true });
+  hydrateLearningInfo(container, active.card);
 }
 
 function submitQuizAnswer(isCorrect) {
