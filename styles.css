@@ -639,11 +639,7 @@ input {
 }
 
 .quiz-learning-info {
-  max-height: 240px;
-  overflow-y: auto;
-  padding: var(--spacing-md);
-  background: var(--bg-secondary);
-  border-radius: var(--radius);
+  padding-top: var(--spacing-md);
 }
 
 .quiz-learning-info .learning-section:first-child {
